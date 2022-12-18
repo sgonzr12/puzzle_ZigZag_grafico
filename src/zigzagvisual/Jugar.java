@@ -16,12 +16,19 @@ public class Jugar {
 	private LinkedList<Labbels> problemaLbl;
 	private Buttons[] selButton;
 	private int max =  0, min = Integer.MAX_VALUE;
+	private LinkedList<Acciones> secuence;
+	private LinkedList<Acciones> undoSecuence;
+	private JMenuItem undoBtn;
+	private JMenuItem redoBtn;
 	
 	
 	/**
 	 * Create the application.
 	 */
 	public Jugar(ArrayList<Integer> lista, int filas, int columnas) {
+	
+		secuence = new LinkedList<>();
+		undoSecuence = new LinkedList<>();
 		this.matrix = lista;
 		System.out.println(matrix.toString());
 		this.filas = filas;
@@ -44,9 +51,46 @@ public class Jugar {
 	}
 	
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 500, 500);
+		frame = new JFrame("ZigZag Grafico");
+		frame.setSize(500, 500);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		JMenuBar menubar = new JMenuBar();
+		JMenu edicion = new JMenu("Edicion");
+		undoBtn = new JMenuItem("Deshacer");
+		undoBtn.setEnabled(false);
+
+		redoBtn = new JMenuItem("Rehacer");
+		redoBtn.setEnabled(false);
+		
+		undoBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!undo()) {
+					undoBtn.setEnabled(false);
+				}
+				if(!redoBtn.isEnabled()) {
+					redoBtn.setEnabled(true);
+				}
+			}
+		});
+		
+		redoBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(!redo()) {
+					redoBtn.setEnabled(false);
+				}
+				if(!undoBtn.isEnabled()) {
+					undoBtn.setEnabled(true);
+				}
+			}
+		});
+		
+		frame.setJMenuBar(menubar);
+		menubar.add(edicion);
+		edicion.add(undoBtn);
+		edicion.add(redoBtn);
+		
+		frame.repaint();
 		frame.setVisible(true);
 		
 		JPanel panelNombre = new JPanel();
@@ -79,6 +123,8 @@ public class Jugar {
 				} catch (Exception e2) {}
 		}});
 		panelBotones.add(btnSolver);
+		
+
 	}
 	
 	private void autosolver() {
@@ -128,8 +174,9 @@ public class Jugar {
 			selButton[0].getButton().setEnabled(false);
 		}else {
 			selButton[1] = searchButton(fila, columna);
-			dibujarLinea();
-			selButton[0] = selButton[1];
+			if(dibujarLinea()) {
+				selButton[0] = selButton[1];
+			}
 		}
 	}
 	
@@ -142,42 +189,58 @@ public class Jugar {
 		return null;
 	}
 	
-	private void dibujarLinea() {
+	private boolean dibujarLinea() {
 		
 		if(secuencial()) {
+			undoSecuence.clear();
+			redoBtn.setEnabled(false);
 			selButton[1].getButton().setEnabled(false);
 			int fila = selButton[1].getFila();
 			int columna = selButton[1].getColumna();
+			Labbels lbl = null;
 			switch (selButton[1].getPunto().getVisitado()) {
 			case 1:
-				searchLbl(fila-1,columna-1).getLabel().setText("\\");
+				lbl = searchLbl(fila-1,columna-1);
+				lbl.getLabel().setText("\\");
 				break;
 			case 2:
-				searchLbl(fila-1,columna).getLabel().setText("|");
+				lbl = searchLbl(fila-1,columna);
+				lbl.getLabel().setText("|");
 				break;
 			case 3:
-				searchLbl(fila-1,columna+1).getLabel().setText("/");
+				lbl = searchLbl(fila-1,columna+1);
+				lbl.getLabel().setText("/");
 				break;
 			case 4:
-				searchLbl(fila,columna-1).getLabel().setText("-");
+				lbl = searchLbl(fila,columna-1);
+				lbl.getLabel().setText("-");
 				break;
 			case 5:
-				searchLbl(fila,columna+1).getLabel().setText("-");
+				lbl = searchLbl(fila,columna+1);
+				lbl.getLabel().setText("-");
 				break;
 			case 6:
-				searchLbl(fila+1,columna-1).getLabel().setText("/");
+				lbl = searchLbl(fila+1,columna-1);
+				lbl.getLabel().setText("/");
 				break;
 			case 7:
-				searchLbl(fila+1,columna).getLabel().setText("|");
+				lbl =searchLbl(fila+1,columna); 
+				lbl.getLabel().setText("|");
 				break;
 			case 8:
-				searchLbl(fila+1,columna+1).getLabel().setText("\\");
+				lbl = searchLbl(fila+1,columna+1); 
+				lbl.getLabel().setText("\\");
 				break;
 			}
+			
+			secuence.addLast(new Acciones(selButton[1], selButton[0], lbl));
+			undoBtn.setEnabled(true);
 			frame.repaint();
+			return true;
 		}else {
 			String errorMessage = "Casilla no valida";
 			JOptionPane.showMessageDialog(frame, errorMessage);
+			return false;
 		}
 		
 	}
@@ -239,36 +302,72 @@ private boolean comprobarCruce(Puntos siguiente, int posicion) {
 		
 		switch (posicion) {
 		case 1:
-			if(searchButton(siguiente.getFila(),siguiente.getColumna()-1).getPunto().getVisitado() == 3) {
+			if(searchButton(siguiente.getFila(),siguiente.getColumna()-2).getPunto().getVisitado() == 3) {
 				return true;
-			}else if(searchButton(siguiente.getFila()-1,siguiente.getColumna()).getPunto().getVisitado() == 6) {
+			}else if(searchButton(siguiente.getFila()-2,siguiente.getColumna()).getPunto().getVisitado() == 6) {
 				return true;
 			}
 			return false;
 		case 3:
-			if(searchButton(siguiente.getFila(),siguiente.getColumna()+1).getPunto().getVisitado() == 1) {
+			if(searchButton(siguiente.getFila(),siguiente.getColumna()+2).getPunto().getVisitado() == 1) {
 				return true;
-			}else if(searchButton(siguiente.getFila()-1,siguiente.getColumna()).getPunto().getVisitado() == 8) {
+			}else if(searchButton(siguiente.getFila()-2,siguiente.getColumna()).getPunto().getVisitado() == 8) {
 				return true;
 			}
 			return false;
 		case 6:
-			if(searchButton(siguiente.getFila(),siguiente.getColumna()-1).getPunto().getVisitado() == 8) {
+			if(searchButton(siguiente.getFila(),siguiente.getColumna()-2).getPunto().getVisitado() == 8) {
 				return true;
-			}else if(searchButton(siguiente.getFila()+1,siguiente.getColumna()).getPunto().getVisitado() == 1) {
+			}else if(searchButton(siguiente.getFila()+2,siguiente.getColumna()).getPunto().getVisitado() == 1) {
 				return true;
 			}
 			return false;
 		case 8:
-			if(searchButton(siguiente.getFila(),siguiente.getColumna()+1).getPunto().getVisitado() == 6) {
+			if(searchButton(siguiente.getFila(),siguiente.getColumna()+2).getPunto().getVisitado() == 6) {
 				return true;
-			}else if(searchButton(siguiente.getFila()+1,siguiente.getColumna()).getPunto().getVisitado() == 3) {
+			}else if(searchButton(siguiente.getFila()+2,siguiente.getColumna()).getPunto().getVisitado() == 3) {
 				return true;
 			}
 			return false;
 
 		default:
 			return false;
+		}
+	}
+
+	private boolean undo() {
+		
+		Acciones action = secuence.removeLast();
+		
+		selButton[0] = action.getBtnAnterior();
+		action.getBtnPulsado().getButton().setEnabled(true);
+		action.getBtnPulsado().getPunto().setVisitado(0);
+		action.getLblModif().getLabel().setText(" ");
+		
+		undoSecuence.addLast(action);
+		
+		if(secuence.isEmpty()) {
+			return false;
+		}else {
+			return true;
+		}
+	}
+	
+	private boolean redo() {
+		
+		Acciones action = undoSecuence.removeLast();
+		
+		selButton[0] = action.getBtnPulsado();
+		action.getBtnPulsado().getButton().setEnabled(false);
+		action.getBtnPulsado().getPunto().setVisitado(action.getVisitado());
+		action.getLblModif().getLabel().setText(action.getConnector());
+		
+		secuence.addLast(action);
+		
+		if(undoSecuence.isEmpty()) {
+			return false;
+		}else {
+			return true;
 		}
 	}
 }
