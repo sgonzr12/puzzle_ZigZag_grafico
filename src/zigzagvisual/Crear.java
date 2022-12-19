@@ -82,7 +82,7 @@ public class Crear {
 		nunColumnasList.setMaximumRowCount(9);
 		panelSelector.add(nunColumnasList);
 		
-		JButton btnAceptar = new JButton("aceptar");
+		JButton btnAceptar = new JButton("Crear");
 		btnAceptar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
@@ -94,7 +94,7 @@ public class Crear {
 		panelSelector.add(btnAceptar);
 		
 		
-		JButton btnMenu = new JButton("menu principal");
+		JButton btnMenu = new JButton("Guardar");
 		btnMenu.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				volverAMenu();

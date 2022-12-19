@@ -14,12 +14,13 @@ public class Jugar {
 	private int filas, columnas;
 	private LinkedList<Buttons> problemaBtn;
 	private LinkedList<Labbels> problemaLbl;
-	private Buttons[] selButton;
+	Buttons[] selButton;
 	private int max =  0, min = Integer.MAX_VALUE;
-	private LinkedList<Acciones> secuence;
-	private LinkedList<Acciones> undoSecuence;
+	LinkedList<Acciones> secuence;
+	LinkedList<Acciones> undoSecuence;
 	private JMenuItem undoBtn;
 	private JMenuItem redoBtn;
+	int counter;
 	
 	
 	/**
@@ -36,6 +37,7 @@ public class Jugar {
 		problemaBtn = new LinkedList<>();
 		problemaLbl = new LinkedList<>();
 		selButton = new Buttons[2];
+		counter = 1;
 		maxMin();
 		initialize();
 	}
@@ -65,7 +67,9 @@ public class Jugar {
 		
 		undoBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!undo()) {
+				Acciones action = secuence.removeLast();
+				undoSecuence.addLast(action);
+				if(!action.undo()) {
 					undoBtn.setEnabled(false);
 				}
 				if(!redoBtn.isEnabled()) {
@@ -76,7 +80,9 @@ public class Jugar {
 		
 		redoBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!redo()) {
+				Acciones action = undoSecuence.removeLast();
+				secuence.addLast(action);
+				if(!action.redo()) {
 					redoBtn.setEnabled(false);
 				}
 				if(!undoBtn.isEnabled()) {
@@ -160,6 +166,8 @@ public class Jugar {
 					problemaBtn.add(tmp);
 				}else{
 					Labbels tmp = new Labbels(new JLabel(" "), frame, i, j);
+					tmp.getLabel().setFont(new Font(tmp.getLabel().getFont().getName(),tmp.getLabel().getFont().getStyle(),45));
+					tmp.getLabel().setHorizontalAlignment(SwingConstants.CENTER);
 					panelJugar.add(tmp.getLabel());
 					problemaLbl.add(tmp);
 				}
@@ -174,7 +182,12 @@ public class Jugar {
 			selButton[0].getButton().setEnabled(false);
 		}else {
 			selButton[1] = searchButton(fila, columna);
-			if(dibujarLinea()) {
+			
+			boolean finalizar = false;
+			if(fila == this.filas*2-2 && columna == this.columnas*2-2) {
+				finalizar = true;
+			}
+			if(dibujarLinea(finalizar)) {
 				selButton[0] = selButton[1];
 			}
 		}
@@ -189,7 +202,7 @@ public class Jugar {
 		return null;
 	}
 	
-	private boolean dibujarLinea() {
+	private boolean dibujarLinea(boolean finalizar) {
 		
 		if(secuencial()) {
 			undoSecuence.clear();
@@ -233,7 +246,19 @@ public class Jugar {
 				break;
 			}
 			
-			secuence.addLast(new Acciones(selButton[1], selButton[0], lbl));
+			secuence.addLast(new Unir(selButton[1], selButton[0], lbl, this));
+			counter++;
+			
+			System.out.println(finalizar+" "+counter);
+			
+			if(finalizar) {
+				if(counter == filas*columnas) {
+					String winMessage = "Has completado el puzzle";
+					JOptionPane.showMessageDialog(frame, winMessage);
+					return false;
+				}
+			}
+			
 			undoBtn.setEnabled(true);
 			frame.repaint();
 			return true;
@@ -332,42 +357,6 @@ private boolean comprobarCruce(Puntos siguiente, int posicion) {
 
 		default:
 			return false;
-		}
-	}
-
-	private boolean undo() {
-		
-		Acciones action = secuence.removeLast();
-		
-		selButton[0] = action.getBtnAnterior();
-		action.getBtnPulsado().getButton().setEnabled(true);
-		action.getBtnPulsado().getPunto().setVisitado(0);
-		action.getLblModif().getLabel().setText(" ");
-		
-		undoSecuence.addLast(action);
-		
-		if(secuence.isEmpty()) {
-			return false;
-		}else {
-			return true;
-		}
-	}
-	
-	private boolean redo() {
-		
-		Acciones action = undoSecuence.removeLast();
-		
-		selButton[0] = action.getBtnPulsado();
-		action.getBtnPulsado().getButton().setEnabled(false);
-		action.getBtnPulsado().getPunto().setVisitado(action.getVisitado());
-		action.getLblModif().getLabel().setText(action.getConnector());
-		
-		secuence.addLast(action);
-		
-		if(undoSecuence.isEmpty()) {
-			return false;
-		}else {
-			return true;
 		}
 	}
 }
