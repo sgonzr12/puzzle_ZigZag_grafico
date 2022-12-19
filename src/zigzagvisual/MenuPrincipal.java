@@ -16,22 +16,6 @@ public class MenuPrincipal {
 	private ArrayList<Integer> lista;
 	private int filas, columnas;
 	private JButton btnJugar, btnGuardar;
-	
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					MenuPrincipal window = new MenuPrincipal();
-					window.frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the application.
@@ -46,6 +30,7 @@ public class MenuPrincipal {
 		btnJugar.setEnabled(false);
 		ocultarJugar();
 		initialize();
+		frame.setVisible(true);
 	}
 	
 	public MenuPrincipal(ArrayList<Integer> lista, int filas, int columnas) {
